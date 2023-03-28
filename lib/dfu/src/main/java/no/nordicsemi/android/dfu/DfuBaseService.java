@@ -234,6 +234,12 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 	 * (even if it has been set to a higher value before).
 	 */
 	public static final String EXTRA_MTU = "no.nordicsemi.android.dfu.extra.EXTRA_MTU";
+
+	/**
+	 * This extra allows you to control the PHY that will be requested (on Android 8.0 or newer devices).
+	 */
+	public static final String EXTRA_PHY = "no.nordicsemi.android.dfu.extra.EXTRA_PHY";
+
 	/**
 	 * This extra value will be used when MTU request returned with an error. That means, that
 	 * MTU has been requested before and may not be changed again. This value will be used instead.
@@ -1175,6 +1181,7 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 				mbrSize = 0;
 		}
 
+		int phyMask = intent.getIntExtra(EXTRA_PHY, DfuServiceInitiator.DEFAULT_PHY_MASK);
 		sendLogBroadcast(LOG_LEVEL_VERBOSE, "DFU service started");
 
 		/*
@@ -1306,7 +1313,7 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 			mProgressInfo.setProgress(PROGRESS_CONNECTING);
 
 			final long before = SystemClock.elapsedRealtime();
-			final BluetoothGatt gatt = connect(deviceAddress);
+			final BluetoothGatt gatt = connect(deviceAddress, phyMask);
 			final long after = SystemClock.elapsedRealtime();
 			// Are we connected?
 			if (gatt == null) {
@@ -1520,9 +1527,10 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 	 * This method returns <code>null</code> if Bluetooth adapter is disabled.
 	 *
 	 * @param address the device address.
+	 * @param phyMask the PHY mask.
 	 * @return The GATT device or <code>null</code> if Bluetooth adapter is disabled.
 	 */
-	protected BluetoothGatt connect(@NonNull final String address) {
+	protected BluetoothGatt connect(@NonNull final String address, final int phyMask) {
 		if (!mBluetoothAdapter.isEnabled())
 			return null;
 
@@ -1535,7 +1543,7 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 			sendLogBroadcast(LOG_LEVEL_DEBUG, "gatt = device.connectGatt(autoConnect = false, TRANSPORT_LE, preferredPhy = LE_1M | LE_2M)");
 			gatt = device.connectGatt(this, false, mGattCallback,
 					BluetoothDevice.TRANSPORT_LE,
-					BluetoothDevice.PHY_LE_1M_MASK | BluetoothDevice.PHY_LE_2M_MASK);
+					phyMask);
 		} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			sendLogBroadcast(LOG_LEVEL_DEBUG, "gatt = device.connectGatt(autoConnect = false, TRANSPORT_LE)");
 			gatt = device.connectGatt(this, false, mGattCallback,

@@ -52,6 +52,7 @@ import androidx.annotation.RequiresApi;
 public final class DfuServiceInitiator {
 	public static final int DEFAULT_PRN_VALUE = 12;
 	public static final int DEFAULT_MBR_SIZE = 0x1000;
+	public static final int DEFAULT_PHY_MASK = BluetoothDevice.PHY_LE_1M_MASK | BluetoothDevice.PHY_LE_2M_MASK;
 	public static final long DEFAULT_SCAN_TIMEOUT = 5000; // ms
 
 	/** Constant used to narrow the scope of the update to system components (SD+BL) only. */
@@ -93,6 +94,8 @@ public final class DfuServiceInitiator {
 
 	private int mtu = 517;
 	private int currentMtu = 23;
+
+	private int phyMask = DEFAULT_PHY_MASK;
 
 	private Parcelable[] legacyDfuUuids;
 	private Parcelable[] secureDfuUuids;
@@ -433,6 +436,22 @@ public final class DfuServiceInitiator {
 		this.mtu = 0;
 		return this;
 	}
+
+	/**
+	 * Sets the PHY that the DFU service will try to request before performing DFU. By default,
+	 * the PHY will not be changed. The DFU service will try to use the same PHY as the one
+	 * used to connect to the device.
+	 * <p>
+	 * By default, the PHY will be set to 1M | 2M, most devices will switch to 2M is they can.
+	 * <p>
+	 * Some Samsung phones will fail with a PHY set to 2M. In such case, use this method to force
+	 * the PHY to 1M.
+	 */
+	public DfuServiceInitiator setPhy(@IntRange(from = 0) final int phy) {
+		this.phyMask = phy;
+		return this;
+	}
+
 
 	/**
 	 * This method allows to narrow the update to selected parts from the ZIP, for example
@@ -848,6 +867,7 @@ public final class DfuServiceInitiator {
 		if (mtu > 0)
 			intent.putExtra(DfuBaseService.EXTRA_MTU, mtu);
 		intent.putExtra(DfuBaseService.EXTRA_CURRENT_MTU, currentMtu);
+		intent.putExtra(DfuBaseService.EXTRA_PHY, phyMask);
 		intent.putExtra(DfuBaseService.EXTRA_UNSAFE_EXPERIMENTAL_BUTTONLESS_DFU, enableUnsafeExperimentalButtonlessDfu);
 		//noinspection StatementWithEmptyBody
 		if (packetReceiptNotificationsEnabled != null) {
