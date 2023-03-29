@@ -52,7 +52,6 @@ import androidx.annotation.RequiresApi;
 public final class DfuServiceInitiator {
 	public static final int DEFAULT_PRN_VALUE = 12;
 	public static final int DEFAULT_MBR_SIZE = 0x1000;
-	public static final int DEFAULT_PHY_MASK = BluetoothDevice.PHY_LE_1M_MASK | BluetoothDevice.PHY_LE_2M_MASK;
 	public static final long DEFAULT_SCAN_TIMEOUT = 5000; // ms
 
 	/** Constant used to narrow the scope of the update to system components (SD+BL) only. */
@@ -95,7 +94,7 @@ public final class DfuServiceInitiator {
 	private int mtu = 517;
 	private int currentMtu = 23;
 
-	private int phyMask = DEFAULT_PHY_MASK;
+	private int phyMask = -1;
 
 	private Parcelable[] legacyDfuUuids;
 	private Parcelable[] secureDfuUuids;
@@ -867,7 +866,8 @@ public final class DfuServiceInitiator {
 		if (mtu > 0)
 			intent.putExtra(DfuBaseService.EXTRA_MTU, mtu);
 		intent.putExtra(DfuBaseService.EXTRA_CURRENT_MTU, currentMtu);
-		intent.putExtra(DfuBaseService.EXTRA_PHY, phyMask);
+		if (phyMask > 0)
+			intent.putExtra(DfuBaseService.EXTRA_PHY, phyMask);
 		intent.putExtra(DfuBaseService.EXTRA_UNSAFE_EXPERIMENTAL_BUTTONLESS_DFU, enableUnsafeExperimentalButtonlessDfu);
 		//noinspection StatementWithEmptyBody
 		if (packetReceiptNotificationsEnabled != null) {

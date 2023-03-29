@@ -1181,7 +1181,6 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 				mbrSize = 0;
 		}
 
-		int phyMask = intent.getIntExtra(EXTRA_PHY, DfuServiceInitiator.DEFAULT_PHY_MASK);
 		sendLogBroadcast(LOG_LEVEL_VERBOSE, "DFU service started");
 
 		/*
@@ -1311,6 +1310,10 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 			 */
 			sendLogBroadcast(LOG_LEVEL_VERBOSE, "Connecting to DFU target...");
 			mProgressInfo.setProgress(PROGRESS_CONNECTING);
+			int phyMask = 0;
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				phyMask = intent.getIntExtra(EXTRA_PHY, BluetoothDevice.PHY_LE_1M_MASK | BluetoothDevice.PHY_LE_2M_MASK);
+			}
 
 			final long before = SystemClock.elapsedRealtime();
 			final BluetoothGatt gatt = connect(deviceAddress, phyMask);
@@ -1540,16 +1543,16 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 		final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
 		BluetoothGatt gatt;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			sendLogBroadcast(LOG_LEVEL_DEBUG, "gatt = device.connectGatt(autoConnect = false, TRANSPORT_LE, preferredPhy = LE_1M | LE_2M)");
+			sendLogBroadcast(LOG_LEVEL_INFO, "gatt = device.connectGatt(autoConnect = false, TRANSPORT_LE, preferredPhy = " + phyMask + ")");
 			gatt = device.connectGatt(this, false, mGattCallback,
 					BluetoothDevice.TRANSPORT_LE,
 					phyMask);
 		} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			sendLogBroadcast(LOG_LEVEL_DEBUG, "gatt = device.connectGatt(autoConnect = false, TRANSPORT_LE)");
+			sendLogBroadcast(LOG_LEVEL_INFO, "gatt = device.connectGatt(autoConnect = false, TRANSPORT_LE)");
 			gatt = device.connectGatt(this, false, mGattCallback,
 					BluetoothDevice.TRANSPORT_LE);
 		} else {
-			sendLogBroadcast(LOG_LEVEL_DEBUG, "gatt = device.connectGatt(autoConnect = false)");
+			sendLogBroadcast(LOG_LEVEL_INFO, "gatt = device.connectGatt(autoConnect = false)");
 			gatt = device.connectGatt(this, false, mGattCallback);
 		}
 
