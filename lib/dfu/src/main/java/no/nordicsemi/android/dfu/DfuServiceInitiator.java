@@ -88,6 +88,8 @@ public final class DfuServiceInitiator {
 	private long rebootTime = 0; // ms
 	private long scanTimeout = DEFAULT_SCAN_TIMEOUT; // ms
 
+	private boolean useAutoConnect = false;
+
 	private Boolean packetReceiptNotificationsEnabled;
 	private int numberOfPackets = 12;
 
@@ -153,6 +155,11 @@ public final class DfuServiceInitiator {
 	 */
 	public DfuServiceInitiator setForeground(final boolean foreground) {
 		this.startAsForegroundService = foreground;
+		return this;
+	}
+
+	public DfuServiceInitiator setAutoConnect(final boolean useAutoConnect) {
+		this.useAutoConnect = useAutoConnect;
 		return this;
 	}
 
@@ -868,6 +875,7 @@ public final class DfuServiceInitiator {
 		intent.putExtra(DfuBaseService.EXTRA_CURRENT_MTU, currentMtu);
 		if (phyMask > 0)
 			intent.putExtra(DfuBaseService.EXTRA_PHY, phyMask);
+		intent.putExtra(DfuBaseService.EXTRA_AUTOCONNECT, useAutoConnect);
 		intent.putExtra(DfuBaseService.EXTRA_UNSAFE_EXPERIMENTAL_BUTTONLESS_DFU, enableUnsafeExperimentalButtonlessDfu);
 		//noinspection StatementWithEmptyBody
 		if (packetReceiptNotificationsEnabled != null) {

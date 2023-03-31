@@ -235,6 +235,10 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 	 */
 	public static final String EXTRA_MTU = "no.nordicsemi.android.dfu.extra.EXTRA_MTU";
 
+
+	public static final String EXTRA_AUTOCONNECT = "no.nordicsemi.android.dfu.extra.EXTRA_AUTOCONNECT";
+
+
 	/**
 	 * This extra allows you to control the PHY that will be requested (on Android 8.0 or newer devices).
 	 */
@@ -1314,9 +1318,10 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 				phyMask = intent.getIntExtra(EXTRA_PHY, BluetoothDevice.PHY_LE_1M_MASK | BluetoothDevice.PHY_LE_2M_MASK);
 			}
+			boolean autoConnect = intent.getBooleanExtra(EXTRA_AUTOCONNECT, false);
 
 			final long before = SystemClock.elapsedRealtime();
-			final BluetoothGatt gatt = connect(deviceAddress, phyMask);
+			final BluetoothGatt gatt = connect(deviceAddress, phyMask, autoConnect);
 			final long after = SystemClock.elapsedRealtime();
 			// Are we connected?
 			if (gatt == null) {
@@ -1533,7 +1538,7 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 	 * @param phyMask the PHY mask.
 	 * @return The GATT device or <code>null</code> if Bluetooth adapter is disabled.
 	 */
-	protected BluetoothGatt connect(@NonNull final String address, final int phyMask) {
+	protected BluetoothGatt connect(@NonNull final String address, final int phyMask, final boolean autoConnect) {
 		if (!mBluetoothAdapter.isEnabled())
 			return null;
 
@@ -1543,17 +1548,17 @@ public abstract class DfuBaseService extends IntentService implements DfuProgres
 		final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
 		BluetoothGatt gatt;
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			sendLogBroadcast(LOG_LEVEL_INFO, "gatt = device.connectGatt(autoConnect = false, TRANSPORT_LE, preferredPhy = " + phyMask + ")");
-			gatt = device.connectGatt(this, false, mGattCallback,
+			sendLogBroadcast(LOG_LEVEL_INFO, "gatt = device.connectGatt(autoConnect = " + autoConnect + ", TRANSPORT_LE, preferredPhy = " + phyMask + ")");
+			gatt = device.connectGatt(this, autoConnect, mGattCallback,
 					BluetoothDevice.TRANSPORT_LE,
 					phyMask);
 		} else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			sendLogBroadcast(LOG_LEVEL_INFO, "gatt = device.connectGatt(autoConnect = false, TRANSPORT_LE)");
-			gatt = device.connectGatt(this, false, mGattCallback,
+			sendLogBroadcast(LOG_LEVEL_INFO, "gatt = device.connectGatt(autoConnect = " + autoConnect + ", TRANSPORT_LE)");
+			gatt = device.connectGatt(this, autoConnect, mGattCallback,
 					BluetoothDevice.TRANSPORT_LE);
 		} else {
-			sendLogBroadcast(LOG_LEVEL_INFO, "gatt = device.connectGatt(autoConnect = false)");
-			gatt = device.connectGatt(this, false, mGattCallback);
+			sendLogBroadcast(LOG_LEVEL_INFO, "gatt = device.connectGatt(autoConnect = " + autoConnect + ")");
+			gatt = device.connectGatt(this, autoConnect, mGattCallback);
 		}
 
 		// We have to wait until the device is connected and services are discovered
